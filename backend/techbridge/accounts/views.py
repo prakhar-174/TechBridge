@@ -17,8 +17,7 @@ import logging
 from accounts.utils import get_tokens_for_user 
 from .serializers import (
     RegisterSerializer,
-    LoginSerializer,
-    UserDataSerializer,
+    LoginSerializer, UserDataSerializer,
     ProfileSerializer,
 )
 

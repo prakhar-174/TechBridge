@@ -40,7 +40,9 @@ INSTALLED_APPS = [
     "rest_framework",
     "accounts",  
     'rest_framework_simplejwt.token_blacklist',
-    "corsheaders",  
+    "corsheaders", 
+    'analysis', 
+    'modules',
 ]
 CORS_ALLOW_ALL_ORIGINS = True 
 
@@ -137,3 +139,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+import os
+from dotenv import load_dotenv
+
+GEMINI_API_KEY=os.getenv("GEMINI_API_KEY")
