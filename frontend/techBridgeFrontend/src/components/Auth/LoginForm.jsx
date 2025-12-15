@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaGoogle, FaLinkedin } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import api from '../../api';
 
 const LoginForm = ({ onSwitchToRegister }) => {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -10,13 +13,30 @@ const LoginForm = ({ onSwitchToRegister }) => {
     });
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        setIsLoading(false);
+        setError('');
+
+        try {
+            const response = await api.post('accounts/login/', {
+                email: formData.email,
+                password: formData.password
+            });
+
+            // Assuming backend returns { access: "token", refresh: "token" }
+            localStorage.setItem('accessToken', response.data.access);
+            localStorage.setItem('refreshToken', response.data.refresh);
+
+            navigate('/dashboard');
+        } catch (err) {
+            console.error("Login failed:", err);
+            setError(err.response?.data?.detail || 'Invalid email or password');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -25,6 +45,12 @@ const LoginForm = ({ onSwitchToRegister }) => {
                 <h2 className="text-3xl font-bold text-white mb-2">Welcome Back</h2>
                 <p className="text-gray-400">Enter your details to access your account</p>
             </div>
+
+            {error && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl mb-6 text-sm text-center">
+                    {error}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Email Field */}

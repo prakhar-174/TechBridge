@@ -4,8 +4,11 @@ import {
     FaUserGraduate, FaBuilding, FaCheck, FaUser, FaEnvelope, FaLock,
     FaEye, FaEyeSlash, FaPhone, FaBriefcase, FaChevronLeft, FaChevronRight
 } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import api from '../../api';
 
 const RegisterWizard = ({ onSwitchToLogin }) => {
+    const navigate = useNavigate();
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         role: '', // 'student' or 'client'
@@ -26,6 +29,7 @@ const RegisterWizard = ({ onSwitchToLogin }) => {
     });
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
 
     const updateFormData = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -42,10 +46,49 @@ const RegisterWizard = ({ onSwitchToLogin }) => {
 
     const handleSubmit = async () => {
         setIsLoading(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        setIsLoading(false);
-        // Handle success (e.g., show success message, redirect)
+        setError('');
+
+        try {
+            // 1. Register User
+            const registerResponse = await api.post('accounts/register/', {
+                email: formData.email,
+                password: formData.password,
+                confirm_password: formData.confirmPassword, // Ensure backend expects this key
+                role: formData.role
+            });
+
+            // 2. Login (if register doesn't return tokens, but usually it might or we auto-login)
+            // For now, let's assume we need to login or use tokens if returned.
+            // If backend returns tokens on register:
+            if (registerResponse.data.access) {
+                localStorage.setItem('accessToken', registerResponse.data.access);
+                localStorage.setItem('refreshToken', registerResponse.data.refresh);
+            } else {
+                // Explicit login if needed
+                const loginResponse = await api.post('accounts/login/', {
+                    email: formData.email,
+                    password: formData.password
+                });
+                localStorage.setItem('accessToken', loginResponse.data.access);
+                localStorage.setItem('refreshToken', loginResponse.data.refresh);
+            }
+
+            // 3. Update Profile
+            await api.patch('accounts/profile/', {
+                full_name: formData.fullName,
+                experience_level: formData.experienceLevel,
+                learning_goal: formData.learningGoal,
+                // Add other fields as needed by backend Profile model
+            });
+
+            navigate('/dashboard');
+
+        } catch (err) {
+            console.error("Registration failed:", err);
+            setError(err.response?.data?.detail || 'Registration failed. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     // Step 1: Role Selection
@@ -55,6 +98,12 @@ const RegisterWizard = ({ onSwitchToLogin }) => {
                 <h2 className="text-3xl font-bold text-white mb-2">Choose Your Path</h2>
                 <p className="text-gray-400">How will you use Tech Bridge?</p>
             </div>
+
+            {error && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl mb-6 text-sm text-center">
+                    {error}
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {['student', 'client'].map((role) => (
@@ -67,8 +116,8 @@ const RegisterWizard = ({ onSwitchToLogin }) => {
                             setTimeout(handleNext, 300);
                         }}
                         className={`cursor-pointer p-6 rounded-2xl border transition-all duration-300 ${formData.role === role
-                                ? 'bg-primary/10 border-primary shadow-lg shadow-primary/20'
-                                : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                            ? 'bg-primary/10 border-primary shadow-lg shadow-primary/20'
+                            : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
                             }`}
                     >
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${formData.role === role ? 'bg-primary text-white' : 'bg-white/10 text-gray-400'
@@ -206,8 +255,8 @@ const RegisterWizard = ({ onSwitchToLogin }) => {
                                     key={level}
                                     onClick={() => updateFormData('experienceLevel', level)}
                                     className={`p-2 rounded-lg border text-sm transition-all ${formData.experienceLevel === level
-                                            ? 'bg-primary/20 border-primary text-white'
-                                            : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
+                                        ? 'bg-primary/20 border-primary text-white'
+                                        : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10'
                                         }`}
                                 >
                                     {level}
