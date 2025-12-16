@@ -10,6 +10,8 @@ import Testimonials from './components/Testimonials';
 import Pricing from './components/Pricing';
 import Footer from './components/Footer';
 import Auth from './pages/Auth';
+import StudentDashboard from './pages/StudentDashboard';
+import Assessment from './pages/Assessment';
 
 const LandingPage = () => (
   <>
@@ -31,6 +33,8 @@ const App = () => {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/dashboard" element={<StudentDashboard />} />
+        <Route path="/assessment" element={<Assessment />} />
       </Routes>
     </Router>
   );
